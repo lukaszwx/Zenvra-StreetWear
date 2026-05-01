@@ -12,3 +12,7 @@ backend/logs/logs/
 *.log
 backend/logs/
 backend/src/database/*.sqlite
+logs/
+*.log
+backend/logs/
+backend/src/database/*.sqlite
