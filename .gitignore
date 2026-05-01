@@ -6,3 +6,9 @@ uploads/
 backend/uploads/
 *.db
 dist/
+logs/
+*.log
+backend/logs/logs/
+*.log
+backend/logs/
+backend/src/database/*.sqlite
