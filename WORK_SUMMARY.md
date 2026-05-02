@@ -5,7 +5,7 @@ Transformar o site Zenvra StreetWear com animações GSAP nível Apple, otimizar
 
 ## ✅ Tarefas Concluídas
 
-### 🎬 Animações GSAP Nível Apple
+### 🎬 Animações GSAP Nível
 - **Hero Component**: Timeline cinematográfica com 3D transforms, parallax, stagger animations
 - **Navbar**: Animações de entrada, logo 3D, magnetic buttons, menu mobile animado
 - **PromotionBanner**: ScrollTrigger batch reveal, hover 3D, modal Flip, lazy loading
