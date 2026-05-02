@@ -2,13 +2,50 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta
       name="description"
-      content="Zenvra - Loja premium de sneakers, roupas e acessórios urbanos."
+      content="Zenvra - Loja premium de sneakers, roupas e acessórios urbanos. Produtos exclusivos com design inovador."
     />
+    <meta name="keywords" content="sneakers, streetwear, roupas urbanas, calçados, moda, zenvra" />
+    <meta name="author" content="Zenvra Streetwear" />
+    <meta name="theme-color" content="#10b981" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
     <link rel="icon" type="image/png" href="/images/zenvralogo.png" />
-    <title>Zenvra</title>
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zenvra.com/" />
+    <meta property="og:title" content="Zenvra - Streetwear Premium" />
+    <meta property="og:description" content="Loja premium de sneakers, roupas e acessórios urbanos" />
+    <meta property="og:image" content="/images/zenvralogo.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://zenvra.com/" />
+    <meta property="twitter:title" content="Zenvra - Streetwear Premium" />
+    <meta property="twitter:description" content="Loja premium de sneakers, roupas e acessórios urbanos" />
+    <meta property="twitter:image" content="/images/zenvralogo.png" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Zenvra" />
+    <meta name="application-name" content="Zenvra" />
+    <meta name="msapplication-TileColor" content="#10b981" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/main.jsx" as="script" type="module" />
+    <link rel="preload" href="/src/styles/index.css" as="style" />
+    
+    <title>Zenvra - Streetwear Premium</title>
   </head>
   <body>
     <div id="root"></div>

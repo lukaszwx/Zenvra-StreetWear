@@ -13,7 +13,13 @@ import {
   Star,
   Trash2,
   X,
+  BarChart3,
+  Package,
+  Users,
+  Settings,
+  TrendingUp,
 } from "lucide-react";
+import AnalyticsDashboard from "./AnalyticsDashboard";
 
 import {
   createAdmin,
@@ -99,6 +105,7 @@ function handleLogout() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [activeTab, setActiveTab] = useState("products"); // products, analytics, promotions, coupons, admins
 
   const galleryImages = useMemo(() => {
     return form.images
@@ -581,12 +588,11 @@ async function handleInviteAdmin(event) {
             </p>
 
             <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">
-              Gerenciador de Produtos
+              Gerenciador Zenvra
             </h2>
 
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
-              Controle produtos, estoque, imagens, destaques e galeria da vitrine
-              com uma interface mais organizada.
+              Controle produtos, analytics, promoções e cupons com interface completa.
             </p>
 
             <p className="mt-3 text-sm text-zinc-500">
@@ -611,35 +617,13 @@ async function handleInviteAdmin(event) {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
                 Estoque
               </p>
-              <p className="mt-1 text-3xl font-black text-emerald-300">
-                {totalStock}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                Destaques
-              </p>
-              <p className="mt-1 text-3xl font-black text-yellow-300">
-                {featuredCount}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-950/20 px-5 text-sm font-bold text-red-300 transition hover:border-red-400/50 hover:bg-red-950/40 active:scale-95"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair
-            </button>
-          </div>
         </div>
 
-        {message.text ? (
-          <div
-            className={`mb-6 flex items-center gap-3 rounded-2xl border px-4 py-3 ${
-              message.type === "success"
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleGoToStore}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
                 ? "border-emerald-400/30 bg-emerald-950/20 text-emerald-300"
                 : message.type === "error"
                   ? "border-red-400/30 bg-red-950/20 text-red-300"

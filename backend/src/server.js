@@ -19,7 +19,7 @@ if (isProduction && jwtSecret.length < 32) {
 }
 
 const DEFAULT_PORT = Number(process.env.PORT) || 3000;
-const FALLBACK_PORTS = [3001, 3002, 3003, 3004, 3005];
+const FALLBACK_PORTS = [8000, 8001, 8002, 8003, 8004];
 
 function startServer(port = DEFAULT_PORT, attempt = 0) {
   const server = app.listen(port, () => {

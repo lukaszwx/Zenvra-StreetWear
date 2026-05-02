@@ -1,62 +1,37 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { fetchActivePromotions } from "../services/api";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Flip } from "gsap/Flip";
-import { Sparkles, Zap, Gift, Star, X, ArrowLeft } from "lucide-react";
+import { 
+  Sparkles, 
+  Zap, 
+  Gift, 
+  Star, 
+  X, 
+  ArrowLeft, 
+  Heart, 
+  Bookmark, 
+  Share2, 
+  Clock,
+  Tag,
+  Percent
+} from "lucide-react";
 
-// Registrar plugins GSAP
-gsap.registerPlugin(ScrollTrigger, Flip);
-
-// Tipo para os cards de promoção
-const PromotionCard = {
-  id: '',
-  title: '',
-  price: 0,
-  image: '',
-  discountType: '',
-  discountValue: 0,
-  description: '',
-  endDate: '',
-  minOrderValue: null,
-  maxUses: null,
-  currentUses: 0
-};
+gsap.registerPlugin(ScrollTrigger);
 
 export default function PromotionBanner() {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState(null);
-  const [selectedPromotion, setSelectedPromotion] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [likedPromos, setLikedPromos] = useState(new Set());
+  const [savedPromos, setSavedPromos] = useState(new Set());
+  const [shareState, setShareState] = useState('idle');
   
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
-  const imageRefs = useRef([]);
   const modalRef = useRef(null);
-  const modalContentRef = useRef(null);
   const scrollTriggersRef = useRef([]);
-  const flipStateRef = useRef(null);
-
-  useEffect(() => {
-    // Detectar mobile e prefers-reduced-motion
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    const checkReducedMotion = () => setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    
-    checkMobile();
-    checkReducedMotion();
-    
-    window.addEventListener('resize', checkMobile);
-    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', checkReducedMotion);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      window.matchMedia('(prefers-reduced-motion: reduce)').removeEventListener('change', checkReducedMotion);
-    };
-  }, []);
 
   useEffect(() => {
     loadPromotions();
@@ -73,601 +48,317 @@ export default function PromotionBanner() {
     });
     scrollTriggersRef.current = [];
 
-    // Estado inicial dos cards
-    gsap.set(cardRefs.current.filter(Boolean), {
-      opacity: 0,
-      y: 40,
-      scale: 0.95,
-      willChange: 'transform, opacity'
-    });
-
-    // ScrollTrigger para revelação animada
-    const scrollTrigger = ScrollTrigger.batch(cardRefs.current.filter(Boolean), {
-      onEnter: batch => gsap.to(batch, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: prefersReducedMotion ? 0.1 : 0.8,
-        ease: prefersReducedMotion ? "none" : "power3.out",
-        stagger: prefersReducedMotion ? 0 : 0.08,
-        onComplete: () => {
-          gsap.set(batch, { willChange: 'auto' });
+    // Animações GSAP Apple-style
+    const ctx = gsap.context(() => {
+      // Animação de entrada dos cards
+      gsap.fromTo(cardRefs.current.filter(Boolean),
+        { opacity: 0, y: 30, scale: 0.95 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          scale: 1, 
+          duration: 0.8, 
+          ease: "power3.out",
+          stagger: 0.15
         }
-      }),
-      once: true
-    });
-    
-    if (scrollTrigger) {
-      scrollTriggersRef.current.push(scrollTrigger);
-    }
-
-    // Hover avançado (desabilitado em mobile)
-    if (!isMobile) {
-      cardRefs.current.forEach((card, index) => {
-        if (!card) return;
-
-        const handleMouseEnter = () => {
-          gsap.to(card, {
-            y: -8,
-            scale: 1.03,
-            duration: 0.3,
-            ease: "power2.out",
-            willChange: 'transform'
-          });
-
-          // Zoom na imagem
-          const image = imageRefs.current[index];
-          if (image) {
-            gsap.to(image, {
-              scale: 1.1,
-              duration: 0.4,
-              ease: "power2.out"
-            });
-          }
-
-          // Gradient overlay fade-in
-          const overlay = card.querySelector('[data-overlay]');
-          if (overlay) {
-            gsap.to(overlay, {
-              opacity: 0.3,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          }
-        };
-
-        const handleMouseLeave = () => {
-          gsap.to(card, {
-            y: 0,
-            scale: 1,
-            duration: 0.3,
-            ease: "power2.out",
-            onComplete: () => {
-              gsap.set(card, { willChange: 'auto' });
-            }
-          });
-
-          const image = imageRefs.current[index];
-          if (image) {
-            gsap.to(image, {
-              scale: 1,
-              duration: 0.4,
-              ease: "power2.out"
-            });
-          }
-
-          const overlay = card.querySelector('[data-overlay]');
-          if (overlay) {
-            gsap.to(overlay, {
-              opacity: 0,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          }
-        };
-
-        card.addEventListener('mouseenter', handleMouseEnter);
-        card.addEventListener('mouseleave', handleMouseLeave);
-
-        // Cleanup
-        return () => {
-          card.removeEventListener('mouseenter', handleMouseEnter);
-          card.removeEventListener('mouseleave', handleMouseLeave);
-        };
-      });
-    }
-
-    return () => {
-      scrollTriggersRef.current.forEach(trigger => {
-        if (trigger && typeof trigger.kill === 'function') {
-          trigger.kill();
-        }
-      });
-      scrollTriggersRef.current = [];
-      gsap.killTweensOf(cardRefs.current);
-      gsap.killTweensOf(imageRefs.current);
-    };
-  }, [promotions, isMobile, prefersReducedMotion]);
-
-  useEffect(() => {
-    if (promotions.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % promotions.length);
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, [promotions.length]);
-
-  const currentPromotion = useMemo(() => {
-    return promotions[currentIndex] || null;
-  }, [promotions, currentIndex]);
-
-  const handleCardClick = useCallback((promotion, event, cardElement) => {
-    if (isMobile) {
-      // Tap animation para mobile
-      gsap.to(cardElement, {
-        scale: 0.95,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1,
-        ease: "power2.inOut"
-      });
-      return;
-    }
-
-    // Salvar estado Flip
-    Flip.getState(cardElement);
-    
-    setSelectedPromotion(promotion);
-    setIsModalOpen(true);
-  }, [isMobile]);
-
-  const closeModal = useCallback(() => {
-    if (modalRef.current && flipStateRef.current) {
-      Flip.from(flipStateRef.current, {
-        duration: 0.6,
-        ease: "power3.inOut",
-        onComplete: () => {
-          setIsModalOpen(false);
-          setSelectedPromotion(null);
-        }
-      });
-    } else {
-      setIsModalOpen(false);
-      setSelectedPromotion(null);
-    }
-  }, []);
-
-  const LazyImage = useCallback(({ src, alt, className, refProp }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [isInView, setIsInView] = useState(false);
-    const imgRef = useRef(null);
-
-    useEffect(() => {
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.disconnect();
-          }
-        },
-        { threshold: 0.1 }
       );
 
-      if (imgRef.current) {
-        observer.observe(imgRef.current);
-      }
+      // Parallax suave nos cards
+      cardRefs.current.filter(Boolean).forEach((card, index) => {
+        const trigger = ScrollTrigger.create({
+          trigger: card,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 1,
+          onUpdate: (self) => {
+            gsap.to(card, {
+              y: self.progress * -20,
+              ease: "none"
+            });
+          }
+        });
+        scrollTriggersRef.current.push(trigger);
+      });
 
-      return () => observer.disconnect();
-    }, []);
+    }, containerRef);
 
-    useEffect(() => {
-      if (refProp && imgRef.current) {
-        refProp.current = imgRef.current;
-      }
-    }, [refProp]);
+    return () => {
+      scrollTriggersRef.current.forEach(trigger => trigger.kill());
+      ctx.revert();
+    };
+  }, [promotions]);
 
-    return (
-      <div ref={imgRef} className={className}>
-        {isInView && (
-          <img
-            src={src}
-            alt={alt}
-            onLoad={() => setIsLoaded(true)}
-            className={`transition-opacity duration-500 ${
-              isLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-        )}
-        {!isLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-700 animate-pulse" />
-        )}
-      </div>
-    );
-  }, []);
-
-  async function loadPromotions() {
+  const loadPromotions = async () => {
     try {
-      setError(null);
+      setLoading(true);
       const data = await fetchActivePromotions();
-      setPromotions(data.promotions || []);
-    } catch (error) {
-      console.error("Erro ao carregar promoções:", error);
-      setError(error.message);
+      // Garantir que promotions seja sempre um array
+      setPromotions(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      console.error('Erro ao carregar promoções:', err);
+      setError('Não foi possível carregar as promoções');
+      setPromotions([]); // Garantir array vazio em caso de erro
     } finally {
       setLoading(false);
     }
-  }
-
-  const getDiscountIcon = (type) => {
-    switch (type) {
-      case 'percentage':
-        return <Zap className="h-6 w-6" />;
-      case 'fixed':
-        return <Gift className="h-6 w-6" />;
-      default:
-        return <Sparkles className="h-6 w-6" />;
-    }
   };
 
-  const getDiscountColor = (type) => {
-    switch (type) {
-      case 'percentage':
-        return 'from-emerald-500/20 to-emerald-600/20 border-emerald-500/30';
-      case 'fixed':
-        return 'from-cyan-500/20 to-blue-500/20 border-cyan-500/30';
-      default:
-        return 'from-emerald-500/20 to-green-500/20 border-emerald-500/30';
-    }
+  const handleLike = (promoId) => {
+    setLikedPromos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(promoId)) {
+        newSet.delete(promoId);
+      } else {
+        newSet.add(promoId);
+      }
+      return newSet;
+    });
   };
 
-  const getDiscountTextColor = (type) => {
-    switch (type) {
-      case 'percentage':
-        return 'text-emerald-400';
-      case 'fixed':
-        return 'text-cyan-400';
-      default:
-        return 'text-emerald-400';
-    }
+  const handleSave = (promoId) => {
+    setSavedPromos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(promoId)) {
+        newSet.delete(promoId);
+      } else {
+        newSet.add(promoId);
+      }
+      return newSet;
+    });
   };
 
-  // Função para garantir decodificação correta de caracteres especiais
-  const decodeText = (text) => {
-    if (!text) return text;
+  const handleShare = async (promo) => {
+    setShareState('sharing');
+    
     try {
-      // Decodificar entidades HTML e garantir UTF-8
-      const decoded = text
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&aacute;/g, 'á')
-        .replace(/&eacute;/g, 'é')
-        .replace(/&iacute;/g, 'í')
-        .replace(/&oacute;/g, 'ó')
-        .replace(/&uacute;/g, 'ú')
-        .replace(/&Aacute;/g, 'Á')
-        .replace(/&Eacute;/g, 'É')
-        .replace(/&Iacute;/g, 'Í')
-        .replace(/&Oacute;/g, 'Ó')
-        .replace(/&Uacute;/g, 'Ú')
-        .replace(/&ccedil;/g, 'ç')
-        .replace(/&Ccedil;/g, 'Ç')
-        .replace(/&ntilde;/g, 'ñ')
-        .replace(/&Ntilde;/g, 'Ñ')
-        .replace(/&agrave;/g, 'à')
-        .replace(/&egrave;/g, 'è')
-        .replace(/&igrave;/g, 'ì')
-        .replace(/&ograve;/g, 'ò')
-        .replace(/&ugrave;/g, 'ù')
-        .replace(/&atilde;/g, 'ã')
-        .replace(/&otilde;/g, 'õ')
-        .replace(/&Atilde;/g, 'Ã')
-        .replace(/&Otilde;/g, 'Õ')
-        .replace(/&auml;/g, 'ä')
-        .replace(/&euml;/g, 'ë')
-        .replace(/&iuml;/g, 'ï')
-        .replace(/&ouml;/g, 'ö')
-        .replace(/&uuml;/g, 'ü')
-        .replace(/&Auml;/g, 'Ä')
-        .replace(/&Euml;/g, 'Ë')
-        .replace(/&Iuml;/g, 'Ï')
-        .replace(/&Ouml;/g, 'Ö')
-        .replace(/&Uuml;/g, 'Ü')
-        .replace(/&ordf;/g, 'ª')
-        .replace(/&ordm;/g, 'º')
-        .replace(/&sect;/g, '§')
-        .replace(/&copy;/g, '©')
-        .replace(/&reg;/g, '®')
-        .replace(/&deg;/g, '°')
-        .replace(/&plusmn;/g, '±')
-        .replace(/&para;/g, '¶')
-        .replace(/&middot;/g, '·')
-        .replace(/&euro;/g, '€')
-        .replace(/&pound;/g, '£')
-        .replace(/&yen;/g, '¥');
+      const text = `Confira esta promoção na Zenvra: ${promo.title} - ${promo.description}`;
       
-      return decoded;
-    } catch (error) {
-      console.warn('Erro ao decodificar texto:', error);
-      return text;
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Promoção Zenvra',
+          text,
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(`${text} - ${window.location.href}`);
+        setShareState('copied');
+        setTimeout(() => setShareState('idle'), 2000);
+      }
+    } catch (err) {
+      console.log('Share failed:', err);
+      setShareState('idle');
     }
+  };
+
+  const formatDiscount = (promo) => {
+    if (promo.discountType === 'percentage') {
+      return `${promo.discountValue}% OFF`;
+    }
+    return `R$ ${promo.discountValue} OFF`;
+  };
+
+  const formatEndDate = (endDate) => {
+    const date = new Date(endDate);
+    return date.toLocaleDateString('pt-BR', { 
+      day: '2-digit', 
+      month: 'short' 
+    });
   };
 
   if (loading) {
     return (
-      <div className="py-8 px-4">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 rounded-2xl bg-gradient-to-r from-zinc-800 to-zinc-700 animate-pulse" />
-            ))}
+      <section className="py-20 bg-gradient-to-b from-[#0f1a21] via-[#050709] to-[#030405]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 backdrop-blur-sm mb-8">
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span className="text-sm font-semibold text-emerald-400">Carregando promoções...</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-80 rounded-3xl bg-zinc-800/50 animate-pulse" />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     );
   }
 
-  if (error || promotions.length === 0) {
-    return null;
+  if (error) {
+    return (
+      <section className="py-20 bg-gradient-to-b from-[#0f1a21] via-[#050709] to-[#030405]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-red-400/30 bg-red-400/10 px-4 py-2 backdrop-blur-sm mb-8">
+            <X className="h-4 w-4 text-red-400" />
+            <span className="text-sm font-semibold text-red-400">{error}</span>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
-    <>
-      <div 
-        ref={containerRef} 
-        className="py-12 px-4"
-        style={{
-          background: 'radial-gradient(circle at top left, #0f1a21 0%, #050709 45%, #030405 100%)'
-        }}
-      >
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-              <Sparkles className="h-8 w-8 text-emerald-400 animate-pulse" />
-              Ofertas Especiais
-              <Star className="h-8 w-8 text-emerald-400 animate-pulse" />
-            </h2>
-            <p className="text-zinc-400 text-lg">Aproveite nossas promoções exclusivas!</p>
-          </div>
-
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {promotions.map((promotion, index) => (
-              <div
-                key={promotion.id}
-                ref={(el) => (cardRefs.current[index] = el)}
-                className={`relative group cursor-pointer transform transition-all duration-500 ${
-                  index === currentIndex ? 'z-10' : 'z-0'
-                }`}
-                onClick={(e) => handleCardClick(promotion, e, cardRefs.current[index])}
-              >
-                {/* Card principal */}
-                <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${getDiscountColor(promotion.discountType)} backdrop-blur-sm p-8 shadow-2xl border border-white/10`}>
-                  {/* Gradient overlay para hover */}
-                  <div 
-                    data-overlay 
-                    className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 transition-opacity duration-300"
-                  />
-
-                  {/* Imagem com lazy loading */}
-                  <div className="relative h-48 mb-6 rounded-xl overflow-hidden">
-                    <LazyImage
-                      src={promotion.bannerImage || `https://picsum.photos/seed/${promotion.id}/400/200.jpg`}
-                      alt={promotion.title}
-                      className="w-full h-full object-cover"
-                      refProp={(el) => (imageRefs.current[index] = el)}
-                    />
-                  </div>
-
-                  {/* Conteúdo */}
-                  <div className="relative z-10">
-                    {/* Badge de tipo */}
-                    <div className={`inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-4 border ${getDiscountColor(promotion.discountType).split(' ')[2]}`}>
-                      {getDiscountIcon(promotion.discountType)}
-                      <span className={`text-sm font-semibold uppercase tracking-wider ${getDiscountTextColor(promotion.discountType)}`}>
-                        {promotion.discountType === 'percentage' ? 'PORCENTAGEM' : 'VALOR FIXO'}
-                      </span>
-                    </div>
-
-                    {/* Título */}
-                    <h3 className="text-2xl font-bold text-white mb-3 leading-tight">
-                      {decodeText(promotion.title)}
-                    </h3>
-
-                    {/* Descrição */}
-                    {promotion.description && (
-                      <p className="text-white/90 mb-6 line-clamp-2">
-                        {decodeText(promotion.description)}
-                      </p>
-                    )}
-
-                    {/* Valor do desconto */}
-                    <div className="flex items-baseline gap-2 mb-6">
-                      <span className={`text-5xl font-black ${getDiscountTextColor(promotion.discountType)}`}>
-                        {promotion.discountType === 'percentage' 
-                          ? `${promotion.discountValue}%`
-                          : `R$${promotion.discountValue}`
-                        }
-                      </span>
-                      <span className="text-xl font-semibold text-white/90">
-                        OFF
-                      </span>
-                    </div>
-
-                    {/* Data de validade */}
-                    <div className="flex items-center gap-2 text-white/80 text-sm">
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Válido até {new Date(promotion.endDate).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </div>
-
-                    {/* Pedido mínimo */}
-                    {promotion.minOrderValue && (
-                      <div className="mt-3 text-white/80 text-sm">
-                        Pedido mínimo: R$ {promotion.minOrderValue.toFixed(2)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Indicador de ativo */}
-                {index === currentIndex && (
-                  <div className="absolute -top-2 -right-2">
-                    <div className="bg-emerald-400 text-black rounded-full p-2 animate-bounce">
-                      <Star className="h-4 w-4" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Navegação */}
-          {promotions.length > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-8">
-              <button
-                onClick={() => setCurrentIndex((prev) => (prev - 1 + promotions.length) % promotions.length)}
-                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors"
-                aria-label="Promoção anterior"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              <div className="flex gap-2">
-                {promotions.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === currentIndex 
-                        ? 'bg-emerald-400 w-8' 
-                        : 'bg-white/30 hover:bg-white/50'
-                    }`}
-                    aria-label={`Ir para promoção ${index + 1}`}
-                  />
-                ))}
-              </div>
-
-              <button
-                onClick={() => setCurrentIndex((prev) => (prev + 1) % promotions.length)}
-                className="bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors"
-                aria-label="Próxima promoção"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
+    <section 
+      ref={containerRef}
+      id="promocoes" 
+      className="py-20 bg-gradient-to-b from-[#0f1a21] via-[#050709] to-[#030405]"
+    >
+      {/* Background decoration */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-1/3 left-1/4 h-64 w-64 rounded-full bg-emerald-400/5 blur-2xl" />
+        <div className="absolute bottom-1/3 right-1/4 h-96 w-96 rounded-full bg-emerald-300/5 blur-3xl" />
       </div>
 
-      {/* Modal Fullscreen com GSAP Flip */}
-      {isModalOpen && selectedPromotion && (
-        <div 
-          ref={modalRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          onClick={closeModal}
-        >
-          <div 
-            ref={modalContentRef}
-            className="relative max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Botão de fechar */}
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 z-10 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors"
-              aria-label="Fechar modal"
-            >
-              <X className="h-6 w-6" />
-            </button>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 backdrop-blur-sm mb-6">
+            <Tag className="h-4 w-4 text-emerald-400" />
+            <span className="text-sm font-semibold text-emerald-400">Promoções Exclusivas</span>
+          </div>
+          
+          <h2 className="text-4xl font-black leading-tight text-[#f3f4f6] sm:text-5xl mb-6">
+            Ofertas que não pode
+            <span className="block text-emerald-400">perder.</span>
+          </h2>
+          
+          <p className="text-lg text-zinc-300 max-w-2xl mx-auto">
+            Aproveite condições especiais em produtos selecionados. 
+            Promoções por tempo limitado com descontos imperdíveis.
+          </p>
+        </div>
 
-            {/* Conteúdo do modal */}
-            <div className={`bg-gradient-to-br ${getDiscountColor(selectedPromotion.discountType)} backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/10`}>
-              {/* Imagem grande */}
-              <div className="relative h-64 md:h-96 rounded-2xl overflow-hidden mb-8">
-                <LazyImage
-                  src={selectedPromotion.bannerImage || `https://picsum.photos/seed/${selectedPromotion.id}/800/400.jpg`}
-                  alt={selectedPromotion.title}
-                  className="w-full h-full object-cover"
-                />
+        {/* Promoções Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {Array.isArray(promotions) && promotions.map((promo, index) => (
+            <div
+              key={promo.id}
+              ref={el => cardRefs.current[index] = el}
+              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm transition-all hover:scale-[1.02] hover:shadow-emerald-400/10"
+            >
+              {/* Glow effect */}
+              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-emerald-400/10 via-emerald-300/5 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              {/* Badge de desconto */}
+              <div className="absolute top-4 left-4 z-10">
+                <div className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">
+                  <Percent className="h-3 w-3" />
+                  {formatDiscount(promo)}
+                </div>
               </div>
 
-              {/* Conteúdo detalhado */}
-              <div className="text-white">
-                <div className="flex items-center gap-3 mb-6">
-                  {getDiscountIcon(selectedPromotion.discountType)}
-                  <h2 className="text-4xl font-bold">{selectedPromotion.title}</h2>
-                </div>
+              {/* Action buttons */}
+              <div className="absolute top-4 right-4 z-10 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleLike(promo.id)}
+                  aria-pressed={likedPromos.has(promo.id)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                >
+                  <Heart 
+                    className={`h-4 w-4 transition-colors ${
+                      likedPromos.has(promo.id) ? 'fill-red-500 text-red-500' : 'text-white'
+                    }`} 
+                  />
+                </button>
 
-                {selectedPromotion.description && (
-                  <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                    {selectedPromotion.description}
-                  </p>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleSave(promo.id)}
+                  aria-pressed={savedPromos.has(promo.id)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                >
+                  <Bookmark 
+                    className={`h-4 w-4 transition-colors ${
+                      savedPromos.has(promo.id) ? 'fill-emerald-400 text-emerald-400' : 'text-white'
+                    }`} 
+                  />
+                </button>
 
-                <div className="grid md:grid-cols-2 gap-8 mb-8">
-                  <div>
-                    <h3 className="text-2xl font-bold mb-4">Detalhes da Promoção</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <span className={`text-5xl font-black ${getDiscountTextColor(selectedPromotion.discountType)}`}>
-                          {selectedPromotion.discountType === 'percentage' 
-                            ? `${selectedPromotion.discountValue}%`
-                            : `R$${selectedPromotion.discountValue}`
-                          }
-                        </span>
-                        <span className="text-2xl font-semibold text-white">OFF</span>
-                      </div>
-                      
-                      {selectedPromotion.minOrderValue && (
-                        <p className="text-lg">
-                          Pedido mínimo: <span className="font-bold">R$ {selectedPromotion.minOrderValue.toFixed(2)}</span>
-                        </p>
-                      )}
-                      
-                      <p className="text-lg">
-                        Válido até: <span className="font-bold">
-                          {new Date(selectedPromotion.endDate).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-2xl font-bold mb-4">Como Usar</h3>
-                    <div className="space-y-2 text-lg">
-                      <p>1. Adicione produtos ao carrinho</p>
-                      <p>2. O desconto será aplicado automaticamente</p>
-                      <p>3. Aproveite sua economia!</p>
-                    </div>
-                  </div>
-                </div>
-
-                <button className="w-full bg-white text-black font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-colors text-lg">
-                  Aproveitar Oferta Agora
+                <button
+                  type="button"
+                  onClick={() => handleShare(promo)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                >
+                  <Share2 className="h-4 w-4 text-white" />
                 </button>
               </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Image */}
+                <div className="relative mb-6 overflow-hidden rounded-2xl bg-zinc-800/50">
+                  {promo.image ? (
+                    <img
+                      src={promo.image}
+                      alt={promo.title}
+                      className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+                    />
+                  ) : (
+                    <div className="flex h-48 w-full items-center justify-center">
+                      <Gift className="h-12 w-12 text-zinc-600" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+                      {promo.title}
+                    </h3>
+                    <p className="text-sm text-zinc-400 line-clamp-3">
+                      {promo.description}
+                    </p>
+                  </div>
+
+                  {/* Meta info */}
+                  <div className="flex items-center justify-between text-xs text-zinc-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span>Até {formatEndDate(promo.endDate)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-emerald-400" />
+                      <span>Exclusivo</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <button
+                    type="button"
+                    className="w-full rounded-full bg-emerald-400 px-4 py-2 font-bold text-black transition-all hover:bg-emerald-300 hover:shadow-lg hover:shadow-emerald-400/25 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0f1a21]"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
+              </div>
+
+              {/* Share feedback */}
+              {shareState === 'copied' && (
+                <div className="absolute bottom-4 left-4 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">
+                  Link copiado!
+                </div>
+              )}
             </div>
-          </div>
+          ))}
         </div>
-      )}
-    </>
+
+        {/* Empty state */}
+        {(!Array.isArray(promotions) || promotions.length === 0) && (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-600/30 bg-zinc-800/50 px-4 py-2 backdrop-blur-sm mb-6">
+              <Tag className="h-4 w-4 text-zinc-400" />
+              <span className="text-sm font-semibold text-zinc-400">Nenhuma promoção ativa</span>
+            </div>
+            <p className="text-zinc-400">
+              Fique de olho! Em breve teremos novas ofertas exclusivas.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

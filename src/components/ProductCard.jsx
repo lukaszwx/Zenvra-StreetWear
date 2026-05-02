@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Eye, MessageCircle, ShoppingBag } from "lucide-react";
+import { Eye, MessageCircle, ShoppingBag, ShoppingCart } from "lucide-react";
 import { formatBRL } from "../utils/format";
 import { createProductWhatsappLink } from "../utils/whatsapp";
+import { useToast } from "../contexts/ToastContext";
 
 function ProductCard({
   product,
@@ -13,6 +14,61 @@ function ProductCard({
   const images = product.images?.length ? product.images : product.image ? [product.image] : [];
   const coverImage = images[0];
   const hasStock = product.stock !== 0;
+  const toast = useToast();
+
+  const addToCart = () => {
+    if (!selectedSize) {
+      toast.error("Selecione um tamanho", { duration: 3000 });
+      return;
+    }
+
+    if (!hasStock) {
+      toast.error("Produto sem estoque", { duration: 3000 });
+      return;
+    }
+
+    // Carregar carrinho atual
+    const cart = JSON.parse(localStorage.getItem('zenvra-cart') || '[]');
+    
+    // Verificar se produto já está no carrinho
+    const existingItem = cart.find(item => 
+      item.id === product.id && item.size === selectedSize
+    );
+
+    if (existingItem) {
+      // Atualizar quantidade
+      const updatedCart = cart.map(item => 
+        item.id === product.id && item.size === selectedSize
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+      localStorage.setItem('zenvra-cart', JSON.stringify(updatedCart));
+      toast.success(`${product.name} atualizado no carrinho!`, { duration: 3000 });
+    } else {
+      // Adicionar novo item
+      const newItem = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        originalPrice: product.originalPrice || product.price,
+        image: product.image,
+        images: product.images || [product.image],
+        size: selectedSize,
+        quantity: 1,
+        category: product.category,
+        subcategory: product.subcategory || '',
+        brand: product.brand || 'Zenvra',
+        addedAt: new Date().toISOString()
+      };
+      
+      const updatedCart = [...cart, newItem];
+      localStorage.setItem('zenvra-cart', JSON.stringify(updatedCart));
+      toast.success(`${product.name} adicionado ao carrinho!`, { duration: 3000 });
+    }
+
+    // Disparar evento para atualizar o carrinho
+    window.dispatchEvent(new Event('cart-updated'));
+  };
 
   const whatsappLink = createProductWhatsappLink(
     whatsappNumber,
@@ -114,15 +170,26 @@ function ProductCard({
 
         <div className="space-y-2">
           {hasStock ? (
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 text-sm font-black text-black shadow-[0_0_26px_rgba(52,211,153,0.22)] transition hover:-translate-y-0.5 hover:bg-emerald-300"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Comprar pelo WhatsApp
-            </a>
+            <>
+              <button
+                type="button"
+                onClick={addToCart}
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 text-sm font-black text-emerald-400 transition hover:bg-emerald-400/20 hover:border-emerald-400/50"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Adicionar ao Carrinho
+              </button>
+              
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 text-sm font-black text-black shadow-[0_0_26px_rgba(52,211,153,0.22)] transition hover:-translate-y-0.5 hover:bg-emerald-300"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Comprar pelo WhatsApp
+              </a>
+            </>
           ) : (
             <button
               type="button"

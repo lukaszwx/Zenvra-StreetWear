@@ -9,6 +9,7 @@ import Hero from "../components/Hero";
 import Navbar from "../components/Navbar";
 import ProductGrid from "../components/ProductGrid";
 import PromotionBanner from "../components/PromotionBanner";
+import AIRecommendations from "../components/AIRecommendations";
 
 import { useProducts } from "../hooks/useProducts";
 
@@ -42,6 +43,16 @@ function StorePage() {
           error={error}
           onRetry={retry}
         />
+
+        {/* AI Recommendations Section */}
+        <section className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <AIRecommendations 
+              products={products}
+              maxRecommendations={8}
+            />
+          </div>
+        </section>
 
         <CouponDisplay />
 

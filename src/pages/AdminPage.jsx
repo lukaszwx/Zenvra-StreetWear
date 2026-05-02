@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import AdminLogin from "../components/AdminLogin";
-import AdminPanel from "../components/AdminPanel";
+import AdminPanelSimple from "../components/AdminPanelSimple";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { useProducts } from "../hooks/useProducts";
@@ -27,8 +27,7 @@ function AdminPage() {
 
       <main>
         {adminLogged ? (
-          <AdminPanel
-            onProductsChange={retry}
+          <AdminPanelSimple
             onLogout={handleLogout}
             onGoToStore={handleGoToStore}
           />
