@@ -1,20 +1,55 @@
-﻿# Zenvra - Loja Streetwear
+﻿# Zenvra - Loja Streetwear Enterprise
 
 ![Zenvra Logo](public/images/logo.png)
 
-Uma loja online moderna e responsiva especializada em roupas streetwear, desenvolvida com tecnologias de ponta para oferecer uma experiência de compra excepcional.
+🚀 **Plataforma e-commerce enterprise-level moderna e responsiva** especializada em streetwear, desenvolvida com tecnologias de ponta para oferecer uma experiência de compra cinematográfica Apple-level.
 
-## Características
+## ✨ Funcionalidades Principais
 
-- **Interface Moderna**: Design responsivo com Tailwind CSS e animações suaves
-- **Catálogo Completo**: Produtos organizados por categorias (Sneakers, Roupas, Acessórios)
-- **Painel Administrativo**: Gerenciamento completo de produtos com autenticação
-- **Upload de Imagens**: Sistema seguro de upload com validações
-- **API RESTful**: Backend robusto com Express.js e SQLite
-- **Autenticação JWT**: Sistema de login seguro para administradores
-- **Logs de Erro**: Monitoramento e logging de erros para manutenção
-- **Recuperação de Senha**: Sistema seguro de redefinição de senha com tokens
-- **Criação de Administradores**: Apenas admins podem criar novos admins
+### 🛍️ **E-commerce Completo**
+- **Catálogo Dinâmico**: Produtos organizados por categorias (Sneakers, Roupas, Acessórios)
+- **Carrinho Funcional**: Sistema completo com cálculo de frete e impostos
+- **Wishlist Inteligente**: Lista de desejos com persistência local
+- **Checkout Profissional**: Múltiplas opções de pagamento e validação
+- **Rastreamento de Pedidos**: Sistema completo tracking em tempo real
+
+### 🎯 **Sistema de Promoções Enterprise**
+- **Gestão de Promoções**: Descontos, frete grátis, leve 2 pague 1
+- **Sistema de Cupons**: Validação avançada com limites e condições
+- **Banner Dinâmico**: Auto-rotate de promoções no frontend
+- **Storage Compartilhado**: Sincronização em tempo real admin ↔ frontend
+- **Validações Inteligentes**: Datas, limites, condições automáticas
+
+### 🎨 **UI/UX Cinematográfica**
+- **Design Apple-level**: Interface moderna com Tailwind CSS
+- **Animações GSAP**: Transições suaves e micro-interações
+- **Responsividade Perfeita**: Desktop, Tablet, Mobile
+- **Dark Theme Elegante**: Paleta esmeralda com gradientes
+- **Componentes Premium**: Botões, cards, modais refinados
+
+### 🛡️ **Painel Administrativo Robusto**
+- **Dashboard Analytics**: Métricas em tempo real com gráficos
+- **Gestão de Produtos**: CRUD completo com upload de imagens
+- **Controle de Promoções**: Sistema completo de marketing
+- **Gestão de Cupons**: Criação e validação de cupons
+- **Controle de Admins**: Sistema de usuários e permissões
+- **Logs e Monitoramento**: Sistema completo de auditoria
+
+### 🔧 **Tecnologia Avançada**
+- **React 18.3.1**: Framework moderno com hooks
+- **Vite 5.4.19**: Build tool ultra-rápido
+- **GSAP 3.15.0**: Animações profissionais
+- **Lucide React**: Ícones consistentes
+- **Express.js**: API RESTful robusta
+- **SQLite**: Banco de dados leve e eficiente
+
+### 🚀 **Recursos Enterprise**
+- **PWA Support**: Install prompt e service worker
+- **Toast System**: Notificações elegantes
+- **Search Avançado**: Busca com filtros e sugestões
+- **Support Center**: Central de ajuda completa
+- **Order Tracking**: Rastreamento em tempo real
+- **AI Recommendations**: Sistema inteligente de sugestões
 
 ## Paleta de Cores
 
@@ -26,24 +61,31 @@ O design do site utiliza uma paleta dark com toques de verde esmeralda:
 - **Acentos**: Branco (#ffffff) e cinzas variados (zinc-300, zinc-400)
 - **Elementos Interativos**: Verde com glow para botões e destaques
 
-## Tecnologias Utilizadas
+## 🛠️ Stack Tecnológico Enterprise
 
-### Frontend
-- **React 18.3.1** - Framework JavaScript
-- **Vite 5.4.19** - Build tool e dev server
-- **React Router 7.14.2** - Roteamento
-- **Tailwind CSS 4.1.8** - Framework CSS
-- **Framer Motion 12.10.0** - Animações
-- **Lucide React 0.511.0** - Ícones
+### Frontend (React 18.3.1)
+- **Vite 5.4.19** - Build tool ultra-rápido ⚡
+- **React Router 7.14.2** - Roteamento SPA
+- **Tailwind CSS 4.1.8** - Framework CSS utility-first
+- **GSAP 3.15.0** - Animações profissionais 🎬
+- **Lucide React 0.511.0** - Ícones consistentes
+- **Framer Motion 12.10.0** - Animações declarativas
 
-### Backend
-- **Node.js** - Runtime JavaScript
-- **Express 4.19.2** - Framework web
-- **SQLite 5.1.1** - Banco de dados
-- **Multer 2.1.1** - Upload de arquivos
-- **JWT** - Autenticação
+### Backend (Node.js)
+- **Express 4.19.2** - Framework web robusto
+- **SQLite 5.1.1** - Banco de dados leve
+- **JWT** - Autenticação stateless
+- **Multer 2.1.1** - Upload de arquivos seguro
 - **Morgan 1.10.0** - Logging HTTP
-- **CORS 2.8.5** - Controle de origem cruzada
+- **CORS 2.8.5** - Controle de origem
+- **Rate Limiting** - Proteção contra DDoS
+
+### 🚀 Performance & Otimização
+- **Code Splitting** - Loading otimizado
+- **Lazy Loading** - Componentes sob demanda
+- **Service Worker** - PWA functionality
+- **Image Optimization** - WebP support
+- **Bundle Analysis** - Tamanho otimizado
 
 ## Instalação
 
