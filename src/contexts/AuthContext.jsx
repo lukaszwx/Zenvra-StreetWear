@@ -34,9 +34,6 @@ export function AuthProvider({ children }) {
 
   const authenticated = Boolean(user && token && !isTokenExpired(token));
   const admin = user?.role === "admin";
-  
-  const authenticated = Boolean(user && token && !isTokenExpired(token));
-  const admin = user?.role === "admin";
   async function login(email, password) {
   setLoading(true);
 

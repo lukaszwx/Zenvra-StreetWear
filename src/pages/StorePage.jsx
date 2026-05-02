@@ -2,11 +2,13 @@ import { useState } from "react";
 
 import Benefits from "../components/Benefits";
 import CategorySection from "../components/CategorySection";
+import CouponDisplay from "../components/CouponDisplay";
 import FloatingWhatsapp from "../components/FloatingWhatsapp";
 import Footer from "../components/Footer";
 import Hero from "../components/Hero";
 import Navbar from "../components/Navbar";
 import ProductGrid from "../components/ProductGrid";
+import PromotionBanner from "../components/PromotionBanner";
 
 import { useProducts } from "../hooks/useProducts";
 
@@ -29,6 +31,8 @@ function StorePage() {
       <main>
         <Hero />
 
+        <PromotionBanner />
+
         <CategorySection onSelectCategory={handleSelectCategory} />
 
         <ProductGrid
@@ -38,6 +42,8 @@ function StorePage() {
           error={error}
           onRetry={retry}
         />
+
+        <CouponDisplay />
 
         <Benefits />
       </main>

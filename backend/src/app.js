@@ -8,7 +8,9 @@ import { initDB } from "./database/init.js";
 import authRoutes from "./routes/auth.routes.js";
 import productsRoutes from "./routes/products.routes.js";
 import uploadsRoutes from "./routes/uploads.routes.js";
-import { errorHandler, notFound } from "./middlewares/error.middleware.js";
+import promotionRoutes from "./routes/promotion.routes.js";
+import { errorHandler, notFound, catchAsync } from "./utils/errorHandler.js";
+import { validateRoute, validateRequestBody, sanitizeInput } from "./utils/routeValidator.js";
 
 const app = express();
 
@@ -47,6 +49,11 @@ if (process.env.NODE_ENV !== "test") {
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 }
 
+// Middlewares de validação e segurança
+app.use(validateRoute);
+app.use(sanitizeInput);
+app.use(validateRequestBody);
+
 // estáticos (server/uploads)
 const uploadsPath = path.resolve(__dirname, "../uploads");
 app.use("/uploads", express.static(uploadsPath));
@@ -59,10 +66,17 @@ app.get("/", (_req, res) => {
   res.json({ ok: true, service: "api-zenvra" });
 });
 
+// Debug middleware
+app.use((req, res, next) => {
+  console.log(`📝 ${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
+
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/uploads", uploadsRoutes);
+app.use("/api/promotions", promotionRoutes);
 
 // 404 e erro
 app.use(notFound);

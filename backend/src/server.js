@@ -1,6 +1,23 @@
 ﻿import "dotenv/config";
 import app from "./app.js";
 
+// Verificar JWT_SECRET para produção
+const jwtSecret = process.env.JWT_SECRET;
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (!jwtSecret) {
+  console.error("⚠️  JWT_SECRET não definido no .env");
+  console.log("📝 Adicione JWT_SECRET=sua-chave-super-secreta no .env");
+  process.exit(1);
+}
+
+if (isProduction && jwtSecret.length < 32) {
+  console.error("⚠️  JWT_SECRET muito fraca para produção!");
+  console.log("🔒 Use uma chave com pelo menos 32 caracteres para produção");
+  console.log("💡 Exemplo: openssl rand -base64 32");
+  process.exit(1);
+}
+
 const DEFAULT_PORT = Number(process.env.PORT) || 3000;
 const FALLBACK_PORTS = [3001, 3002, 3003, 3004, 3005];
 

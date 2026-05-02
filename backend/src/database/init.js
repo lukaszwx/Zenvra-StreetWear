@@ -214,6 +214,7 @@ export async function initDB() {
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
+      must_change_password INTEGER DEFAULT 0,
       resetToken TEXT,
       resetTokenExpires TEXT,
       createdAt TEXT NOT NULL DEFAULT (datetime('now')),
@@ -221,11 +222,35 @@ export async function initDB() {
     )
   `);
 
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS invites (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      token TEXT NOT NULL UNIQUE,
+      role TEXT NOT NULL DEFAULT 'admin',
+      expires_at TEXT NOT NULL,
+      used INTEGER NOT NULL DEFAULT 0,
+      created_by TEXT NOT NULL,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    )
+  `);
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS admin_logs (
+      id TEXT PRIMARY KEY,
+      action TEXT NOT NULL,
+      details TEXT,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   const userColumns = await db.all("PRAGMA table_info(users)");
-  if (!userColumNames.includes("mustChangePassword")) {
+  const userColumnNames = userColumns.map((column) => column.name);
+  
+  if (!userColumnNames.includes("mustChangePassword")) {
     await db.exec("ALTER TABLE users ADD COLUMN mustChangePassword INTEGER DEFAULT 0");
   }
-  const userColumnNames = userColumns.map((column) => column.name);
 
   if (!userColumnNames.includes("resetToken")) {
     await db.exec("ALTER TABLE users ADD COLUMN resetToken TEXT");
@@ -251,6 +276,61 @@ export async function initDB() {
       `UPDATE products SET createdAt = COALESCE(createdAt, datetime('now')), updatedAt = COALESCE(updatedAt, datetime('now'))`,
     );
   }
+
+  // Criar tabela de promoções
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS promotions (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      discountType TEXT CHECK(discountType IN ('percentage', 'fixed')) NOT NULL,
+      discountValue REAL NOT NULL,
+      startDate TEXT NOT NULL,
+      endDate TEXT NOT NULL,
+      isActive INTEGER DEFAULT 1,
+      applicableProducts TEXT,
+      minOrderValue REAL,
+      maxUses INTEGER,
+      currentUses INTEGER DEFAULT 0,
+      bannerImage TEXT,
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Criar tabela de cupons
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS coupons (
+      id TEXT PRIMARY KEY,
+      code TEXT UNIQUE NOT NULL,
+      description TEXT,
+      discountType TEXT CHECK(discountType IN ('percentage', 'fixed')) NOT NULL,
+      discountValue REAL NOT NULL,
+      startDate TEXT NOT NULL,
+      endDate TEXT NOT NULL,
+      isActive INTEGER DEFAULT 1,
+      minOrderValue REAL,
+      maxUses INTEGER,
+      currentUses INTEGER DEFAULT 0,
+      applicableProducts TEXT,
+      applicableCategories TEXT,
+      createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Criar tabela de usos de cupons
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS coupon_uses (
+      id TEXT PRIMARY KEY,
+      couponId TEXT NOT NULL,
+      userEmail TEXT NOT NULL,
+      orderId TEXT,
+      discountAmount REAL NOT NULL,
+      usedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (couponId) REFERENCES coupons (id)
+    )
+  `);
 
   const count = await db.get("SELECT COUNT(*) as total FROM products");
 
@@ -290,7 +370,9 @@ export async function initDB() {
     const existingAdmin = await db.get("SELECT id FROM users WHERE email = ?", [process.env.ADMIN_EMAIL]);
 
     if (!existingAdmin) {
+      console.log("👤 Criando administrador inicial...");
       const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+      
       await db.run(
         `INSERT INTO users (id, name, email, password_hash, role, mustChangePassword, createdAt, updatedAt) VALUES (?, ?, ?, ?, 'admin',0,datetime('now'),datetime('now'))`,
         [
@@ -300,7 +382,17 @@ export async function initDB() {
           passwordHash,
         ],
       );
+      
+      console.log(`✅ Administrador criado: ${process.env.ADMIN_EMAIL}`);
+      console.log(`🔑 Senha: ${process.env.ADMIN_PASSWORD}`);
+      console.log("🌐 Acesse: http://localhost:3000/painel-interno-zenvra");
+      console.log("⚠️  Altere a senha após primeiro login!");
+    } else {
+      console.log("👤 Administrador inicial já existe.");
     }
+  } else {
+    console.log("⚠️  ADMIN_EMAIL e ADMIN_PASSWORD não definidos no .env");
+    console.log("📝 Defina essas variáveis para criar o admin automaticamente");
   }
 
   return db;
