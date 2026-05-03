@@ -18,20 +18,24 @@ export async function createPromotion(promotionData) {
     bannerImage
   } = promotionData;
 
+  // Garantir datas em formato ISO para SQLite
+  const formattedStartDate = startDate ? new Date(startDate).toISOString() : new Date().toISOString();
+  const formattedEndDate = endDate ? new Date(endDate).toISOString() : new Date(Date.now() + 30*24*60*60*1000).toISOString(); // 30 dias padrão
+
   await db.run(
     `INSERT INTO promotions (
       id, title, description, discountType, discountValue, 
       startDate, endDate, applicableProducts, minOrderValue, 
-      maxUses, bannerImage, createdAt, updatedAt
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      maxUses, bannerImage, isActive, createdAt, updatedAt
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
     [
       id,
       title,
       description,
       discountType,
       discountValue,
-      startDate,
-      endDate,
+      formattedStartDate,
+      formattedEndDate,
       applicableProducts ? JSON.stringify(applicableProducts) : null,
       minOrderValue,
       maxUses,
@@ -39,7 +43,9 @@ export async function createPromotion(promotionData) {
     ]
   );
 
-  return { id, ...promotionData };
+  console.log('✅ Promotion created:', { id, title, isActive: 1 });
+  
+  return { id, ...promotionData, isActive: 1 };
 }
 
 export async function getAllPromotions() {
@@ -57,21 +63,26 @@ export async function getAllPromotions() {
 
 export async function getActivePromotions() {
   const db = await connectDB();
-  const now = new Date().toISOString();
   
-  const promotions = await db.all(
-    `SELECT * FROM promotions 
-     WHERE isActive = 1 
-     AND startDate <= ? 
-     AND endDate >= ?
-     ORDER BY createdAt DESC`,
-    [now, now]
-  );
-
-  return promotions.map(promo => ({
-    ...promo,
-    applicableProducts: promo.applicableProducts ? JSON.parse(promo.applicableProducts) : null
-  }));
+  try {
+    const promotions = await db.all(
+      `SELECT * FROM promotions 
+       WHERE isActive = 1 
+       AND (startDate IS NULL OR datetime(startDate) <= datetime('now'))
+       AND (endDate IS NULL OR datetime(endDate) >= datetime('now'))
+       ORDER BY createdAt DESC`
+    );
+    
+    console.log('📋 Active promotions found:', promotions.length);
+    
+    return promotions.map(promo => ({
+      ...promo,
+      applicableProducts: promo.applicableProducts ? JSON.parse(promo.applicableProducts) : null
+    }));
+  } catch (error) {
+    console.error('Error fetching active promotions:', error);
+    return [];
+  }
 }
 
 export async function updatePromotion(id, promotionData) {

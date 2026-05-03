@@ -142,7 +142,7 @@ export default function BeautifulLoading() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes bounce {
           0%, 80%, 100% {
             transform: scale(0);

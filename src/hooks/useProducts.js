@@ -15,7 +15,7 @@ export function useProducts() {
       setFallback(false);
 
       const data = await fetchProducts();
-      setProducts(data);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || "Erro inesperado ao carregar produtos.");
       setProducts(fallbackProducts);

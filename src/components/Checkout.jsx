@@ -179,7 +179,7 @@ function Checkout({ onClose }) {
         shipping: shippingOptions.find(opt => opt.id === shippingMethod),
         payment: paymentMethod,
         subtotal: calculateSubtotal(),
-        shipping: calculateShipping(),
+        shippingCost: calculateShipping(),
         total: calculateTotal(),
         status: paymentMethod === "whatsapp" ? "pending" : "processing",
         createdAt: new Date().toISOString()
@@ -197,30 +197,30 @@ function Checkout({ onClose }) {
 
       if (paymentMethod === "whatsapp") {
         // WhatsApp checkout
-        const message = `💝 *NOVO PEDIDO ZENVRA* 💝
-        
-📦 *Pedido:* ${orderData.id}
-👤 *Cliente:* ${formData.name}
-📧 *Email:* ${formData.email}
-📱 *Telefone:* ${formData.phone}
+        const message = `*NOVO PEDIDO ZENVRA*
 
-🛒 *Produtos:*
-${cart.map(item => `• ${item.name} - Tamanho: ${item.size} - Qtd: ${item.quantity} - R$ ${item.price.toFixed(2)}`).join('\n')}
+*Pedido:* ${orderData.id}
+*Cliente:* ${formData.name}
+*Email:* ${formData.email}
+*Telefone:* ${formData.phone}
 
-📊 *Resumo:*
-• Subtotal: R$ ${calculateSubtotal().toFixed(2)}
-• Frete (${shippingOptions.find(opt => opt.id === shippingMethod).name}): R$ ${calculateShipping().toFixed(2)}
-• *Total: R$ ${calculateTotal().toFixed(2)}*
+*Produtos:*
+${cart.map(item => `- ${item.name} - Tamanho: ${item.size} - Qtd: ${item.quantity} - R$ ${item.price.toFixed(2)}`).join('\n')}
 
-🚚 *Entrega:*
+*Resumo:*
+- Subtotal: R$ ${calculateSubtotal().toFixed(2)}
+- Frete (${shippingOptions.find(opt => opt.id === shippingMethod).name}): R$ ${calculateShipping().toFixed(2)}
+- *Total: R$ ${calculateTotal().toFixed(2)}*
+
+*Entrega:*
 ${formData.address}, ${formData.number} - ${formData.neighborhood}
 ${formData.city}/${formData.state}
 CEP: ${formData.cep}
 
-💳 *Pagamento:* WhatsApp
+*Pagamento:* WhatsApp
 
 ---
-*Pedido recebido! Aguardamos confirmação para prosseguir.*`;
+*Pedido recebido! Aguardamos confirmacao para prosseguir.*`;
 
         const whatsappLink = createGenericWhatsappLink(message);
         window.open(whatsappLink, '_blank');
@@ -228,7 +228,7 @@ CEP: ${formData.cep}
         toast.success("Redirecionando para WhatsApp...", { duration: 3000 });
       } else {
         // Checkout tradicional
-        toast.success("Pedido confirmado! 🎉", { duration: 4000 });
+        toast.success("Pedido confirmado!", { duration: 4000 });
       }
 
       setStep(4);

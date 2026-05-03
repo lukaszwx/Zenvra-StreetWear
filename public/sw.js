@@ -94,6 +94,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle other requests with cache-first strategy
+  // Skip service worker for dev server requests
+  if (request.url.startsWith('http://localhost:5173') || request.url.startsWith('ws://localhost:5173')) {
+    return;
+  }
   event.respondWith(handleDynamicRequest(request));
 });
 
@@ -271,6 +275,16 @@ async function handleNavigationRequest(request) {
 
 // Handle dynamic requests with cache-first strategy
 async function handleDynamicRequest(request) {
+  // Ignorar requests chrome-extension://
+  if (request.url.startsWith('chrome-extension://')) {
+    return fetch(request);
+  }
+  
+  // Apenas cache requests http:// ou https://
+  if (!request.url.startsWith('http://') && !request.url.startsWith('https://')) {
+    return fetch(request);
+  }
+  
   const cachedResponse = await caches.match(request);
   
   if (cachedResponse) {

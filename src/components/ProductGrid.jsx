@@ -61,12 +61,14 @@ function ProductGrid({
   // Carregar likedProducts da wishlist
   useEffect(() => {
     const wishlist = JSON.parse(localStorage.getItem('zenvra-wishlist') || '[]');
-    const likedIds = new Set(wishlist.map(item => item.id));
+    const safeWishlist = Array.isArray(wishlist) ? wishlist : [];
+    const likedIds = new Set(safeWishlist.map(item => item.id));
     setLikedProducts(likedIds);
   }, [products]);
 
   useEffect(() => {
-    const initialSizes = products.reduce((acc, product) => {
+    const safeProducts = Array.isArray(products) ? products : [];
+    const initialSizes = safeProducts.reduce((acc, product) => {
       acc[product.id] = product.sizes?.[0] || "";
       return acc;
     }, {});
@@ -81,21 +83,24 @@ function ProductGrid({
   }, [quickCategory]);
 
   const categories = useMemo(() => {
-    return ["Todos", ...new Set(products.map((product) => product.category))];
+    const safeProducts = Array.isArray(products) ? products : [];
+    return ["Todos", ...new Set(safeProducts.map((product) => product.category))];
   }, [products]);
 
   const sizes = useMemo(() => {
+    const safeProducts = Array.isArray(products) ? products : [];
     const uniqueSizes = [
-      ...new Set(products.flatMap((product) => product.sizes || [])),
+      ...new Set(safeProducts.flatMap((product) => product.sizes || [])),
     ].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
 
     return ["Todos", ...uniqueSizes];
   }, [products]);
 
   const visibleProducts = useMemo(() => {
+    const safeProducts = Array.isArray(products) ? products : [];
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    const filtered = products.filter((product) => {
+    const filtered = safeProducts.filter((product) => {
       const byName = product.name.toLowerCase().includes(normalizedSearch);
       const byCategory =
         selectedCategory === "Todos" || product.category === selectedCategory;

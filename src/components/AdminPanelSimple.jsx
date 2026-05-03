@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { 
   Package, 
   BarChart3, 
-  TrendingUp, 
+  BarChart3 as TrendingUp, 
   Star, 
   Users, 
   LogOut,
-  Store
+  ShoppingBag as Store
 } from "lucide-react";
 import AnalyticsDashboard from "./AnalyticsDashboard";
 import ProductsManager from "./ProductsManager";

@@ -10,7 +10,7 @@ import {
   Trash2, 
   Eye, 
   Star,
-  TrendingUp,
+  BarChart3 as TrendingUp,
   Image as ImageIcon,
   X,
   Check,

@@ -89,10 +89,7 @@ function PromotionsBanner() {
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-black/20"></div>
-        <div className="h-full w-full bg-repeat" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundSize: '40px 40px'
-        }}></div>
+        <div className="h-full w-full bg-repeat bg-[url('data:image/svg+xml,%3Csvg_width=\'40\'_height=\'40\'_viewBox=\'0_0_40_40\'_xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg_fill=\'%23ffffff\'_fill-opacity=\'0.1\'%3E%3Cpath_d=\'M0_40L40_0H20L0_20M40_40V20L20_40\'/%3E%3C/g%3E%3C/svg%3E')] bg-[length:40px_40px]"></div>
       </div>
 
       <div className="container mx-auto px-4 py-3 relative z-10">
@@ -158,7 +155,7 @@ function PromotionsBanner() {
         animation: isAnimating ? 'shimmer 0.6s ease-out' : 'none'
       }}></div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }

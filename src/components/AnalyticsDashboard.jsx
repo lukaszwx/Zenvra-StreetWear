@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { 
-  TrendingUp, 
+  BarChart3 as TrendingUp, 
   Users, 
   ShoppingCart, 
   Heart,

@@ -180,15 +180,14 @@ function ProductCard({
                 Adicionar ao Carrinho
               </button>
               
-              <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => window.open(whatsappLink, '_blank')}
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 text-sm font-black text-black shadow-[0_0_26px_rgba(52,211,153,0.22)] transition hover:-translate-y-0.5 hover:bg-emerald-300"
               >
                 <MessageCircle className="h-4 w-4" />
                 Comprar pelo WhatsApp
-              </a>
+              </button>
             </>
           ) : (
             <button

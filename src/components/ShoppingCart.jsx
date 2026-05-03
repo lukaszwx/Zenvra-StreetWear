@@ -206,27 +206,27 @@ function ShoppingCart({ onCheckout }) {
         // Simular processamento
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const message = `� *NOVO PEDIDO ZENVRA* �
-        
-📦 *Produtos:*
-${items.map(item => `• ${item.name} - Tamanho: ${item.size} - Qtd: ${item.quantity} - R$ ${item.price.toFixed(2)}`).join('\n')}
+        const message = `*NOVO PEDIDO ZENVRA*
 
-📊 *Resumo:*
-• Subtotal: R$ ${getTotalPrice().toFixed(2)}
-• Total: R$ ${getTotalPrice().toFixed(2)}
+*Produtos:*
+${items.map(item => `- ${item.name} - Tamanho: ${item.size} - Qtd: ${item.quantity} - R$ ${item.price.toFixed(2)}`).join('\n')}
 
-📍 *Entrega:*
+*Resumo:*
+- Subtotal: R$ ${getTotalPrice().toFixed(2)}
+- Total: R$ ${getTotalPrice().toFixed(2)}
+
+*Entrega:*
 A combinar com cliente
 
-💳 *Pagamento:* A combinar
+*Pagamento:* A combinar
 
 ---
-*Pedido recebido! Aguardamos confirmação para prosseguir.*`;
+*Pedido recebido! Aguardamos confirmacao para prosseguir.*`;
 
         const whatsappLink = createGenericWhatsappLink(WHATSAPP_NUMBER, message);
         window.open(whatsappLink, '_blank');
         
-        toast.special('🎉 Pedido enviado com sucesso! Redirecionando para WhatsApp...', {
+        toast.special('Pedido enviado com sucesso! Redirecionando para WhatsApp...', {
           duration: 5000,
           persistent: true
         });

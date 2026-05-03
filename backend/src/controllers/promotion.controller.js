@@ -18,91 +18,155 @@ import { catchAsync } from "../utils/errorHandler.js";
 
 // Promoções
 export const createPromotionController = catchAsync(async (req, res) => {
-  const promotion = await createPromotion(req.body);
+  try {
+    const promotion = await createPromotion(req.body);
 
-  await adminLog("create_promotion", {
-    promotionId: promotion.id,
-    title: promotion.title,
-    performedBy: req.user.id,
-    performedByEmail: req.user.email,
-    ip: req.ip,
-  });
+    await adminLog("create_promotion", {
+      promotionId: promotion.id,
+      title: promotion.title,
+      performedBy: req.user.id,
+      performedByEmail: req.user.email,
+      ip: req.ip,
+    });
 
-  return res.status(201).json({
-    message: "Promoção criada com sucesso.",
-    promotion,
-  });
+    // Emitir evento para frontend atualizar (via WebSocket ou polling)
+    // Em produção, usar WebSocket. Por ora, frontend fará polling.
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        message: "Promoção criada com sucesso.",
+        promotion
+      }
+    });
+  } catch (error) {
+    console.error('❌ Create promotion error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to create promotion'
+    });
+  }
 });
 
 export const getAllPromotionsController = catchAsync(async (req, res) => {
-  const promotions = await getAllPromotions();
-  
-  return res.json({
-    promotions,
-    total: promotions.length,
-  });
+  try {
+    const promotions = await getAllPromotions();
+    
+    return res.json({
+      success: true,
+      data: {
+        promotions,
+        total: promotions.length
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch promotions'
+    });
+  }
 });
 
 export const getActivePromotionsController = catchAsync(async (req, res) => {
-  const promotions = await getActivePromotions();
-  
-  return res.json({
-    promotions,
-    total: promotions.length,
-  });
+  try {
+    const promotions = await getActivePromotions();
+    
+    return res.json({
+      success: true,
+      data: {
+        promotions,
+        total: promotions.length
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch active promotions'
+    });
+  }
 });
 
 export const updatePromotionController = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const promotion = await updatePromotion(id, req.body);
+  try {
+    const { id } = req.params;
+    const promotion = await updatePromotion(id, req.body);
 
-  await adminLog("update_promotion", {
-    promotionId: id,
-    title: promotion.title,
-    performedBy: req.user.id,
-    performedByEmail: req.user.email,
-    ip: req.ip,
-  });
+    await adminLog("update_promotion", {
+      promotionId: id,
+      title: promotion.title,
+      performedBy: req.user.id,
+      performedByEmail: req.user.email,
+      ip: req.ip,
+    });
 
-  return res.json({
-    message: "Promoção atualizada com sucesso.",
-    promotion,
-  });
+    return res.json({
+      success: true,
+      data: {
+        message: "Promoção atualizada com sucesso.",
+        promotion
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update promotion'
+    });
+  }
 });
 
 export const deletePromotionController = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  
-  await deletePromotion(id);
+  try {
+    const { id } = req.params;
+    
+    await deletePromotion(id);
 
-  await adminLog("delete_promotion", {
-    promotionId: id,
-    performedBy: req.user.id,
-    performedByEmail: req.user.email,
-    ip: req.ip,
-  });
+    await adminLog("delete_promotion", {
+      promotionId: id,
+      performedBy: req.user.id,
+      performedByEmail: req.user.email,
+      ip: req.ip,
+    });
 
-  return res.json({
-    message: "Promoção removida com sucesso.",
-  });
+    return res.json({
+      success: true,
+      data: {
+        message: "Promoção excluída com sucesso."
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to delete promotion'
+    });
+  }
 });
 
 // Cupons
 export const createCouponController = catchAsync(async (req, res) => {
-  const coupon = await createCoupon(req.body);
+  try {
+    const coupon = await createCoupon(req.body);
 
-  await adminLog("create_coupon", {
-    couponId: coupon.id,
-    code: coupon.code,
-    performedBy: req.user.id,
-    performedByEmail: req.user.email,
-    ip: req.ip,
-  });
+    await adminLog("create_coupon", {
+      couponId: coupon.id,
+      code: coupon.code,
+      performedBy: req.user.id,
+      performedByEmail: req.user.email,
+      ip: req.ip,
+    });
 
-  return res.status(201).json({
-    message: "Cupom criado com sucesso.",
-    coupon,
-  });
+    return res.status(201).json({
+      success: true,
+      data: {
+        message: "Cupom criado com sucesso.",
+        coupon
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to create coupon'
+    });
+  }
 });
 
 export const getAllCouponsController = catchAsync(async (req, res) => {

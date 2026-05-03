@@ -78,9 +78,11 @@ export default function CouponDisplay() {
   async function loadCoupons() {
     try {
       const data = await fetchActiveCoupons();
-      setCoupons(data.coupons || []);
+      const couponsData = data?.coupons || Array.isArray(data) ? data : [];
+      setCoupons(Array.isArray(couponsData) ? couponsData : []);
     } catch (error) {
       console.error("Erro ao carregar cupons:", error);
+      setCoupons([]);
     } finally {
       setLoading(false);
     }

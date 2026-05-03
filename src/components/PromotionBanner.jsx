@@ -1,154 +1,94 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { fetchActivePromotions } from "../services/api";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { 
   Sparkles, 
-  Zap, 
   Gift, 
-  Star, 
-  X, 
-  ArrowLeft, 
-  Heart, 
-  Bookmark, 
-  Share2, 
   Clock,
   Tag,
-  Percent
+  Percent,
+  X
 } from "lucide-react";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export default function PromotionBanner() {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState(null);
-  const [likedPromos, setLikedPromos] = useState(new Set());
-  const [savedPromos, setSavedPromos] = useState(new Set());
-  const [shareState, setShareState] = useState('idle');
+  const [timeLeft, setTimeLeft] = useState({});
   
   const containerRef = useRef(null);
-  const cardRefs = useRef([]);
-  const modalRef = useRef(null);
-  const scrollTriggersRef = useRef([]);
 
   useEffect(() => {
     loadPromotions();
   }, []);
 
+  // Auto-refresh every 60 seconds
   useEffect(() => {
-    if (promotions.length === 0) return;
+    const interval = setInterval(loadPromotions, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Limpar ScrollTriggers anteriores
-    scrollTriggersRef.current.forEach(trigger => {
-      if (trigger && typeof trigger.kill === 'function') {
-        trigger.kill();
-      }
-    });
-    scrollTriggersRef.current = [];
-
-    // Animações GSAP Apple-style
-    const ctx = gsap.context(() => {
-      // Animação de entrada dos cards
-      gsap.fromTo(cardRefs.current.filter(Boolean),
-        { opacity: 0, y: 30, scale: 0.95 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          scale: 1, 
-          duration: 0.8, 
-          ease: "power3.out",
-          stagger: 0.15
-        }
-      );
-
-      // Parallax suave nos cards
-      cardRefs.current.filter(Boolean).forEach((card, index) => {
-        const trigger = ScrollTrigger.create({
-          trigger: card,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1,
-          onUpdate: (self) => {
-            gsap.to(card, {
-              y: self.progress * -20,
-              ease: "none"
-            });
-          }
-        });
-        scrollTriggersRef.current.push(trigger);
-      });
-
-    }, containerRef);
-
-    return () => {
-      scrollTriggersRef.current.forEach(trigger => trigger.kill());
-      ctx.revert();
+  // Escutar eventos de criação de promoção
+  useEffect(() => {
+    const handlePromotionCreated = () => {
+      console.log('🔄 Refreshing promotions after creation...');
+      loadPromotions();
     };
+
+    window.addEventListener('promotion-created', handlePromotionCreated);
+    return () => window.removeEventListener('promotion-created', handlePromotionCreated);
+  }, []);
+
+  // Countdown timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTimeLeft = {};
+      promotions.forEach(promo => {
+        if (promo.endDate) {
+          const endTime = new Date(promo.endDate).getTime();
+          const now = new Date().getTime();
+          const distance = endTime - now;
+          
+          if (distance > 0) {
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            newTimeLeft[promo.id] = {
+              days: days.toString().padStart(2, '0'),
+              hours: hours.toString().padStart(2, '0'),
+              minutes: minutes.toString().padStart(2, '0'),
+              seconds: seconds.toString().padStart(2, '0')
+            };
+          }
+        }
+      });
+      setTimeLeft(newTimeLeft);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [promotions]);
 
   const loadPromotions = async () => {
     try {
       setLoading(true);
       const data = await fetchActivePromotions();
-      // Garantir que promotions seja sempre um array
-      setPromotions(Array.isArray(data) ? data : []);
+      const promotionsArray = Array.isArray(data) ? data : (data?.promotions || []);
+      setPromotions(promotionsArray);
       setError(null);
     } catch (err) {
-      console.error('Erro ao carregar promoções:', err);
-      setError('Não foi possível carregar as promoções');
-      setPromotions([]); // Garantir array vazio em caso de erro
+      setError('Promoções temporariamente indisponíveis');
+      setPromotions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLike = (promoId) => {
-    setLikedPromos(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(promoId)) {
-        newSet.delete(promoId);
-      } else {
-        newSet.add(promoId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSave = (promoId) => {
-    setSavedPromos(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(promoId)) {
-        newSet.delete(promoId);
-      } else {
-        newSet.add(promoId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleShare = async (promo) => {
-    setShareState('sharing');
-    
-    try {
-      const text = `Confira esta promoção na Zenvra: ${promo.title} - ${promo.description}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Promoção Zenvra',
-          text,
-          url: window.location.href
-        });
-      } else {
-        await navigator.clipboard.writeText(`${text} - ${window.location.href}`);
-        setShareState('copied');
-        setTimeout(() => setShareState('idle'), 2000);
-      }
-    } catch (err) {
-      console.log('Share failed:', err);
-      setShareState('idle');
-    }
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost:3000${imagePath}`;
   };
 
   const formatDiscount = (promo) => {
@@ -156,14 +96,6 @@ export default function PromotionBanner() {
       return `${promo.discountValue}% OFF`;
     }
     return `R$ ${promo.discountValue} OFF`;
-  };
-
-  const formatEndDate = (endDate) => {
-    const date = new Date(endDate);
-    return date.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: 'short' 
-    });
   };
 
   if (loading) {
@@ -193,6 +125,19 @@ export default function PromotionBanner() {
           <div className="inline-flex items-center gap-2 rounded-full border border-red-400/30 bg-red-400/10 px-4 py-2 backdrop-blur-sm mb-8">
             <X className="h-4 w-4 text-red-400" />
             <span className="text-sm font-semibold text-red-400">{error}</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (promotions.length === 0) {
+    return (
+      <section className="py-20 bg-gradient-to-b from-[#0f1a21] via-[#050709] to-[#030405]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <Gift className="h-12 w-12 text-zinc-600" />
+            <p className="text-zinc-400">Nenhuma promoção ativa no momento</p>
           </div>
         </div>
       </section>
@@ -230,135 +175,108 @@ export default function PromotionBanner() {
           </p>
         </div>
 
-        {/* Promoções Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Array.isArray(promotions) && promotions.map((promo, index) => (
-            <div
-              key={promo.id}
-              ref={el => cardRefs.current[index] = el}
-              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm transition-all hover:scale-[1.02] hover:shadow-emerald-400/10"
-            >
-              {/* Glow effect */}
-              <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-emerald-400/10 via-emerald-300/5 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              {/* Badge de desconto */}
-              <div className="absolute top-4 left-4 z-10">
-                <div className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">
-                  <Percent className="h-3 w-3" />
-                  {formatDiscount(promo)}
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="absolute top-4 right-4 z-10 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleLike(promo.id)}
-                  aria-pressed={likedPromos.has(promo.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <Heart 
-                    className={`h-4 w-4 transition-colors ${
-                      likedPromos.has(promo.id) ? 'fill-red-500 text-red-500' : 'text-white'
-                    }`} 
-                  />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSave(promo.id)}
-                  aria-pressed={savedPromos.has(promo.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <Bookmark 
-                    className={`h-4 w-4 transition-colors ${
-                      savedPromos.has(promo.id) ? 'fill-emerald-400 text-emerald-400' : 'text-white'
-                    }`} 
-                  />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleShare(promo)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-all hover:scale-110 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <Share2 className="h-4 w-4 text-white" />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                {/* Image */}
-                <div className="relative mb-6 overflow-hidden rounded-2xl bg-zinc-800/50">
-                  {promo.image ? (
-                    <img
-                      src={promo.image}
-                      alt={promo.title}
-                      className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                    />
-                  ) : (
-                    <div className="flex h-48 w-full items-center justify-center">
-                      <Gift className="h-12 w-12 text-zinc-600" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
-                      {promo.title}
-                    </h3>
-                    <p className="text-sm text-zinc-400 line-clamp-3">
-                      {promo.description}
-                    </p>
-                  </div>
-
-                  {/* Meta info */}
-                  <div className="flex items-center justify-between text-xs text-zinc-500">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>Até {formatEndDate(promo.endDate)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 text-emerald-400" />
-                      <span>Exclusivo</span>
-                    </div>
-                  </div>
-
-                  {/* CTA */}
-                  <button
-                    type="button"
-                    className="w-full rounded-full bg-emerald-400 px-4 py-2 font-bold text-black transition-all hover:bg-emerald-300 hover:shadow-lg hover:shadow-emerald-400/25 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0f1a21]"
-                  >
-                    Ver Detalhes
-                  </button>
-                </div>
-              </div>
-
-              {/* Share feedback */}
-              {shareState === 'copied' && (
-                <div className="absolute bottom-4 left-4 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">
-                  Link copiado!
-                </div>
-              )}
-            </div>
-          ))}
+        {/* Mobile carousel - horizontal scroll snap */}
+        <div className="md:hidden">
+          <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 -mx-4 px-4">
+            {promotions.map((promo, index) => (
+              <motion.div
+                key={promo.id}
+                initial={{ opacity: 0, y: 30, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  duration: 0.8, 
+                  ease: "easeOut",
+                  delay: index * 0.15
+                }}
+                className="flex-none w-80 snap-center"
+              >
+                <PromotionCard promo={promo} timeLeft={timeLeft[promo.id]} getImageUrl={getImageUrl} formatDiscount={formatDiscount} />
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        {/* Empty state */}
-        {(!Array.isArray(promotions) || promotions.length === 0) && (
-          <div className="text-center py-16">
-            <div className="inline-flex items-center gap-2 rounded-full border border-zinc-600/30 bg-zinc-800/50 px-4 py-2 backdrop-blur-sm mb-6">
-              <Tag className="h-4 w-4 text-zinc-400" />
-              <span className="text-sm font-semibold text-zinc-400">Nenhuma promoção ativa</span>
-            </div>
-            <p className="text-zinc-400">
-              Fique de olho! Em breve teremos novas ofertas exclusivas.
-            </p>
-          </div>
-        )}
+        {/* Desktop grid */}
+        <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <AnimatePresence>
+            {promotions.map((promo, index) => (
+              <motion.div
+                key={promo.id}
+                initial={{ opacity: 0, y: 30, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -30, scale: 0.96 }}
+                transition={{ 
+                  duration: 0.8, 
+                  ease: "easeOut",
+                  delay: index * 0.15
+                }}
+              >
+                <PromotionCard promo={promo} timeLeft={timeLeft[promo.id]} getImageUrl={getImageUrl} formatDiscount={formatDiscount} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
     </section>
+  );
+}
+
+function PromotionCard({ promo, timeLeft, getImageUrl, formatDiscount }) {
+  const imageUrl = getImageUrl(promo.bannerImage);
+  
+  return (
+    <div className="group relative overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm transition-all hover:scale-[1.02] hover:shadow-emerald-400/10">
+      {/* Glow effect */}
+      <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-emerald-400/10 via-emerald-300/5 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+      
+      {/* Badge de desconto */}
+      <div className="absolute top-4 left-4 z-10">
+        <div className="flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-xs font-bold text-black">
+          <Percent className="h-3 w-3" />
+          {formatDiscount(promo)}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6">
+        {/* Image */}
+        <div className="relative mb-6 overflow-hidden rounded-2xl bg-zinc-800/50">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={promo.title}
+              className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+            />
+          ) : (
+            <div className="flex h-48 w-full items-center justify-center">
+              <Gift className="h-12 w-12 text-zinc-600" />
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+              {promo.title}
+            </h3>
+            <p className="text-zinc-300 text-sm line-clamp-3">{promo.description}</p>
+          </div>
+
+          {/* Countdown Timer */}
+          {timeLeft && (
+            <div className="flex items-center gap-2 text-emerald-400">
+              <Clock className="h-4 w-4" />
+              <div className="flex items-center gap-1 text-xs font-medium">
+                {timeLeft.days && <span>{timeLeft.days}d</span>}
+                {timeLeft.hours && <span>{timeLeft.hours}h</span>}
+                {timeLeft.minutes && <span>{timeLeft.minutes}m</span>}
+                {timeLeft.seconds && <span>{timeLeft.seconds}s</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
